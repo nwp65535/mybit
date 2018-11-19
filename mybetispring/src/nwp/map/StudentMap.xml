@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="nwp.map.StudentMap">
+ <!--  默认结果集-->
+ 	<!-- 学生 -->
+ 	<resultMap type="nwp.entity.Student" id="user">
+ 		<id column="sid" property="sid"/>
+ 		<result column="sname" property="sname"/>
+ 		<result column="smiaoshu" property="smiaoshu"/>
+ 	</resultMap>
+ 	<!-- 班级 -->
+ 	<resultMap type="nwp.entity.Cla" id="cla">
+ 		<id column="cid" property="cid"/>
+ 		<result column="cname" property="cname"/>
+ 		<result column="cmiaoshu" property="cmiaoshu"/>
+ 	</resultMap>
+ 	<!-- 年级 -->
+ 	<resultMap type="nwp.entity.Garde" id="garde">
+ 		<id column="gid" property="gid"/>
+ 		<result column="gname" property="gname"/>
+ 		<result column="gmiaoshu" property="gmiaoshu"/>
+ 	</resultMap>
+ <!--开始查询  -->
+ 	<!--年级附带班级 学生信息  返回学生-->
+ 	<resultMap type="nwp.entity.Garde" id="findAllMsg"  extends="garde">
+ 		<collection property="clas" resultMap="cla" >
+ 			<collection property="students" resultMap="user">
+ 			</collection>
+ 		</collection>
+ 	</resultMap>
+ 	<!-- SQL -->
+ 	<select id="findAll" resultMap="findAllMsg" >
+ 		 <!-- SELECT student.sname,student.smiaoshu,cla.cname,cla.cmiaoshu,grade.gname,grade.gmiaoshu FROM student,cla,grade WHERE grade.gid=cla.gid AND student.cid=cla.cid -->
+		 SELECT * FROM student,cla,grade WHERE grade.gid=cla.gid AND student.cid=cla.cid
+ 	</select>
+ 	<!--查询学生带班级信息  -->
+ 	<resultMap type="nwp.entity.Student" id="findStudentWhiteClass" extends="user">
+ 		<association property="cla" resultMap="cla">
+ 		</association>
+ 	</resultMap>
+ 	<!-- SQL -->
+ 	<select id="findStudentAndClass" resultMap="findStudentWhiteClass">
+ 		SELECT * FROM student,cla WHERE student.cid=cla.cid
+ 	</select>
+ </mapper>

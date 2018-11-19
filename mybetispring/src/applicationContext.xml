@@ -1,0 +1,74 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd 
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.2.xsd 
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.2.xsd ">
+
+	<!-- 加载配置文件 -->
+	<context:property-placeholder location="classpath:db.properties" />
+	<!-- 数据库连接池 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="maxActive" value="10" />
+		<property name="maxIdle" value="5" />
+		
+	</bean>
+	<!--管理SqlSessionFactory -->
+	<bean id="SqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="configLocation" value="classpath:SqlMapConfig.xml"></property>
+	</bean>
+	<!--dao模式添加dao  -->
+	<bean id="sdao" class="nwp.dao.StudentDaoImpl">
+		<property name="sqlSessionFactory" ref="SqlSessionFactory"></property>
+	</bean>
+	<!-- map模式普通方法  
+	<bean id="smap" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="nwp.map.StudentMap"></property>
+		<property name="sqlSessionFactory" ref="SqlSessionFactory"></property>
+	</bean> -->
+	<!-- map自动方式 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="nwp.map"></property>
+		<property name="sqlSessionFactoryBeanName"  value="SqlSessionFactory"></property>
+	</bean>
+	<bean id="smap" class="nwp.service.impl.StudentServiceImpl">
+		<property name="studentMap" ref="studentMap"></property>
+	</bean>
+	<!--事務控制  org.springframework.jdbc.datasource.DataSourceTransactionManager-->
+	<bean id="txManager" 
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+		>
+		<property name="dataSource" ref="SqlSessionFactory" />
+	</bean>
+	
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="*" />
+			<tx:method name="search*" read-only="true" />
+			<tx:method name="find*" propagation="NEVER" />
+			<tx:method name="add*" propagation="REQUIRED" />
+			<tx:method name="query*" propagation="NEVER"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<aop:config>
+		<aop:pointcut id="service"
+			expression="execution(public * nwp.servie.impl..*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="service" />
+	</aop:config>
+
+</beans>
